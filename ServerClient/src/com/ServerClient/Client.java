@@ -20,11 +20,9 @@ public class Client {
             Socket socket = new Socket(serverAddress, serverPort);
             System.out.println("Connected to server at " + serverAddress + ":" + serverPort);
             
-            // Start input thread
             Thread inputThread = new Thread(new InputThread(socket));
             inputThread.start();
             
-            // Start output thread
             Thread outputThread = new Thread(new OutputThread(socket));
             outputThread.start();
         } catch (IOException e) {
