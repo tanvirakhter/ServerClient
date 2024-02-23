@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+//@author tanvirakhtershakib
+
 public class Client {
     private String serverAddress;
     private int serverPort;
