@@ -64,8 +64,10 @@ public class Server {
                     case "QUIT":
                         handleQuit(parameters);
                         break;
+                    case "CHANGE_COORDINATOR":
+                        handleChangeCoordinator(parameters, writer);
+                        break;
                     default:
-                        
                         writer.println("ERROR|Unknown command: " + command);
                         break;
                 }
@@ -76,7 +78,6 @@ public class Server {
     }
     
     private void handleJoin(String parameters, Socket clientSocket, PrintWriter writer) {
-        
         String[] parts = parameters.split(",");
         if (parts.length != 3) {
             writer.println("ERROR|Invalid parameters for JOIN command");
@@ -115,10 +116,8 @@ public class Server {
     }
     
     private void handleMessage(String parameters) {
-        
         String[] parts = parameters.split("\\|", 3);
         if (parts.length != 3) {
-            
             return;
         }
         
@@ -127,7 +126,6 @@ public class Server {
         String message = parts[2];
         
         if ("ALL".equals(to)) {
-            
             for (Socket socket : activeMembers.values()) {
                 try {
                     PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
@@ -137,7 +135,6 @@ public class Server {
                 }
             }
         } else {
-            
             Socket socket = activeMembers.get(to);
             if (socket != null) {
                 try {
@@ -153,10 +150,31 @@ public class Server {
     private void handleQuit(String parameters) {
         activeMembers.remove(parameters);
         if (coordinator.equals(parameters)) {
-            
             coordinator = activeMembers.keySet().iterator().next(); 
         }
         System.out.println("Member left: " + parameters);
+    }
+    
+    private void handleChangeCoordinator(String newCoordinatorId, PrintWriter writer) {
+        if (activeMembers.containsKey(newCoordinatorId)) {
+            coordinator = newCoordinatorId;
+            writer.println("COORDINATOR|" + coordinator);
+            System.out.println("Coordinator changed to: " + newCoordinatorId);
+            broadcastMessage("COORDINATOR_CHANGE|" + coordinator);
+        } else {
+            writer.println("ERROR|Specified ID does not exist in active members.");
+        }
+    }
+    
+    private void broadcastMessage(String message) {
+        for (Socket socket : activeMembers.values()) {
+            try {
+                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                writer.println(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     
     private class ClientHandler implements Runnable {
